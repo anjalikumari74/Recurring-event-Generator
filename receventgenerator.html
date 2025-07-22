@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recurring Event Instance Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 900px;
+            margin: auto;
+        }
+        .section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="date"],
+        input[type="time"],
+        input[type="number"],
+        select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .instance-list {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .instance-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .instance-list li {
+            padding: 8px 0;
+            border-bottom: 1px dotted #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .instance-list li:last-child {
+            border-bottom: none;
+        }
+        .out-of-window {
+            color: #aaa;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recurring Event Instance Generator</h1>
+
+        <div class="section">
+            <h2>Event Definition</h2>
+            <label for="eventStartDate">Event Start Date:</label>
+            <input type="date" id="eventStartDate" placeholder="YYYY-MM-DD">
+
+            <label for="eventTime">Event Time:</label>
+            <input type="time" id="eventTime" value="09:00" placeholder="09:00 (HH:MM)">
+
+            <label for="recurrenceType">Recurrence Type:</label>
+            <select id="recurrenceType">
+                <option value="weekly">Weekly</option>
+                <option value="daily">Daily</option>
+            </select>
+
+            <div id="dayOfWeekSelection">
+                <label for="dayOfWeek">Day of Week:</label>
+                <select id="dayOfWeek">
+                    <option value="0">Sunday</option>
+                    <option value="1">Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                </select>
+            </div>
+
+            <label for="numberOfOccurrences">Number of Occurrences:</label>
+            <input type="number" id="numberOfOccurrences" min="1" value="10" placeholder="e.g., 10">
+        </div>
+
+        <div class="section">
+            <h2>View Window</h2>
+            <label for="viewWindowStartDate">View Window Start Date:</label>
+            <input type="date" id="viewWindowStartDate" placeholder="YYYY-MM-DD">
+
+            <label for="viewWindowEndDate">View Window End Date:</label>
+            <input type="date" id="viewWindowEndDate" placeholder="YYYY-MM-DD">
+        </div>
+
+        <button id="generateInstances">Generate Instances</button>
+
+        <div class="section">
+            <h2>Generated Instances</h2>
+            <div class="instance-list">
+                <ul id="instanceList">
+                    <li>No instances generated yet.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const eventStartDateInput = document.getElementById('eventStartDate');
+            const eventTimeInput = document.getElementById('eventTime');
+            const recurrenceTypeSelect = document.getElementById('recurrenceType');
+            const dayOfWeekSelectionDiv = document.getElementById('dayOfWeekSelection');
+            const dayOfWeekSelect = document.getElementById('dayOfWeek');
+            const numberOfOccurrencesInput = document.getElementById('numberOfOccurrences');
+            const viewWindowStartDateInput = document.getElementById('viewWindowStartDate');
+            const viewWindowEndDateInput = document.getElementById('viewWindowEndDate');
+            const generateInstancesButton = document.getElementById('generateInstances');
+            const instanceListUl = document.getElementById('instanceList');
+
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+
+            const twoMonthsLater = new Date(today);
+            twoMonthsLater.setMonth(today.getMonth() + 2);
+
+            eventStartDateInput.valueAsDate = tomorrow;
+            viewWindowStartDateInput.valueAsDate = today;
+            viewWindowEndDateInput.valueAsDate = twoMonthsLater;
+
+
+            recurrenceTypeSelect.addEventListener('change', () => {
+                if (recurrenceTypeSelect.value === 'weekly') {
+                    dayOfWeekSelectionDiv.style.display = 'block';
+                } else {
+                    dayOfWeekSelectionDiv.style.display = 'none';
+                }
+            });
+
+            recurrenceTypeSelect.dispatchEvent(new Event('change'));
+
+            generateInstancesButton.addEventListener('click', () => {
+                const eventStartDateStr = eventStartDateInput.value;
+                const eventTimeStr = eventTimeInput.value;
+                const recurrenceType = recurrenceTypeSelect.value;
+                const selectedDayOfWeek = parseInt(dayOfWeekSelect.value, 10);
+                const numberOfOccurrences = parseInt(numberOfOccurrencesInput.value, 10);
+                const viewWindowStartDateStr = viewWindowStartDateInput.value;
+                const viewWindowEndDateStr = viewWindowEndDateInput.value;
+
+                if (!eventStartDateStr || !eventTimeStr || !numberOfOccurrences || !viewWindowStartDateStr || !viewWindowEndDateStr) {
+                    alert('Please fill in all event and view window details.');
+                    return;
+                }
+
+                const eventStartDateTime = new Date(`${eventStartDateStr}T${eventTimeStr}`);
+                const viewWindowStartDate = new Date(viewWindowStartDateStr);
+                const viewWindowEndDate = new Date(viewWindowEndDateStr);
+
+                viewWindowEndDate.setHours(23, 59, 59, 999);
+
+                let generatedInstances = [];
+
+                if (recurrenceType === 'weekly') {
+                    let currentInstanceDate = new Date(eventStartDateTime);
+                    const initialDayOfWeek = currentInstanceDate.getDay(); 
+
+                    let daysToAdd = (selectedDayOfWeek - initialDayOfWeek + 7) % 7;
+                    currentInstanceDate.setDate(currentInstanceDate.getDate() + daysToAdd);
+
+                    for (let i = 0; i < numberOfOccurrences; i++) {
+                        
+                        const instance = new Date(currentInstanceDate);
+                        instance.setHours(eventStartDateTime.getHours(), eventStartDateTime.getMinutes(), eventStartDateTime.getSeconds(), eventStartDateTime.getMilliseconds());
+                        generatedInstances.push(instance);
+                        currentInstanceDate.setDate(currentInstanceDate.getDate() + 7); 
+                    }
+                } else if (recurrenceType === 'daily') {
+                    let currentInstanceDate = new Date(eventStartDateTime);
+                    for (let i = 0; i < numberOfOccurrences; i++) {
+                        const instance = new Date(currentInstanceDate);
+                        instance.setHours(eventStartDateTime.getHours(), eventStartDateTime.getMinutes(), eventStartDateTime.getSeconds(), eventStartDateTime.getMilliseconds());
+                        generatedInstances.push(instance);
+                        currentInstanceDate.setDate(currentInstanceDate.getDate() + 1); 
+                    }
+                }
+
+                displayInstances(generatedInstances, viewWindowStartDate, viewWindowEndDate);
+            });
+
+            function displayInstances(instances, viewStart, viewEnd) {
+                instanceListUl.innerHTML = ''; 
+
+                if (instances.length === 0) {
+                    instanceListUl.innerHTML = '<li>No instances generated.</li>';
+                    return;
+                }
+
+                instances.forEach(instance => {
+                    const listItem = document.createElement('li');
+                    const instanceDateTime = new Date(instance); 
+                    const instanceTimestamp = instanceDateTime.getTime();
+                    const viewStartTimestamp = viewStart.getTime();
+                    const viewEndTimestamp = viewEnd.getTime();
+
+                    const isWithinViewWindow = instanceTimestamp >= viewStartTimestamp && instanceTimestamp <= viewEndTimestamp;
+
+                    listItem.textContent = instanceDateTime.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+
+                    if (!isWithinViewWindow) {
+                        listItem.classList.add('out-of-window');
+                    }
+                    instanceListUl.appendChild(listItem);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
